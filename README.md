@@ -49,7 +49,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish to Labspace
+      - name: Publish Labspace
         uses: dockersamples/publish-labspace-action@v1
         with:
           labspace_repo: dockersamples/labspace-demo
