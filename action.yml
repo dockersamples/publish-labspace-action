@@ -1,0 +1,109 @@
+name: 'Publish Labspace'
+description: 'Packages the project as a tarball and publishes it as a Labspace using Docker Compose'
+branding:
+  icon: 'package'
+  color: 'blue'
+
+inputs:
+  labspace_repo:
+    description: 'The repo where the Compose file should be published'
+    required: true
+  labspace_base_version:
+    description: 'The version of the base Labspace Compose file'
+    required: false
+    default: 'latest'
+  labspace_overrides_file:
+    description: 'Path to the Labspace Compose overrides file'
+    required: false
+    default: '.labspace/compose.overrides.yaml'
+  
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Docker Compose
+      uses: docker/setup-compose-action@v1
+      with:
+        version: v2.39.3
+
+    - name: Set contentVersion in Labspace metadata
+      shell: bash
+      run: |
+        if [ ! -f labspace.yaml ]; then
+          echo "Error: labspace.yaml not found in repository root"
+          exit 1
+        fi
+        CONTENT_VERSION=$(git rev-parse --short HEAD)
+        echo "Setting contentVersion in labspace.yaml to $CONTENT_VERSION"
+        
+        if grep -qE '^[[:space:]]*contentVersion:' labspace.yaml; then
+          # Use portable in-place edit across GNU/macOS sed
+          sed -i.bak "s/^\([[:space:]]*contentVersion:\).*/\1 $CONTENT_VERSION/" labspace.yaml && rm -f labspace.yaml.bak
+        else
+          echo "Warning: contentVersion: not found in labspace.yaml; skipping update"
+        fi
+
+    - name: Create project tarball and encode
+      shell: bash
+      run: |
+        echo "Creating tarball of project..."
+        tar -czf project.tar.gz \
+          --exclude='.git' \
+          --exclude='node_modules' \
+          .
+
+        echo "Base64 encoding tarball..."
+        # Use portable base64 invocation (GNU/macOS)
+        base64 project.tar.gz > project.tar.base64
+
+        echo "Tarball created and encoded successfully"
+
+    - name: Generate compose overrides with embedded tarball
+      shell: bash
+      run: |
+        echo "Generating .labspace/compose.pipeline.yaml..."
+        mkdir -p .labspace
+
+        # Create the pipeline compose file
+        cat > .labspace/compose.pipeline.yaml << 'EOF'
+        configs:
+          project_source_tar:
+            content: |
+        EOF
+
+        # Append the base64 content with proper indentation
+        cat project.tar.base64 | sed 's/^/      /' >> .labspace/compose.pipeline.yaml
+
+        # Append the service configuration to mount the config and specify its location
+        cat >> .labspace/compose.pipeline.yaml << 'EOF'
+
+        services:
+          configurator:
+            configs:
+              - source: project_source_tar
+                target: /etc/labspace-support/content.tar.base64
+            environment:
+              PROJECT_TAR_PATH: /etc/labspace-support/content.tar.base64
+        EOF
+
+        echo "Compose pipeline file generated successfully"
+
+    - name: Publish to Labspace
+      shell: bash
+      run: |
+        echo "Publishing Labspace..."
+
+        OVERRIDES_FLAG=""
+        if [ -f "${{ inputs.labspace_overrides_file }}" ]; then
+          OVERRIDES_FLAG="-f ${{ inputs.labspace_overrides_file }}"
+        else
+          echo "Overrides file '${{ inputs.labspace_overrides_file }}' not found; proceeding without it."
+        fi
+
+        docker compose \
+          -f oci://dockersamples/labspace:${{ inputs.labspace_base_version }} \
+          ${OVERRIDES_FLAG} \
+          -f .labspace/compose.pipeline.yaml \
+          publish ${{ inputs.labspace_repo }} --with-env -y
+
+        echo "Labspace published successfully"
