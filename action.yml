@@ -47,7 +47,7 @@ runs:
       shell: bash
       run: |
         echo "Creating tarball of project..."
-        tar -czf project.tar.gz \
+        tar -czf /tmp/project.tar.gz \
           --exclude='.git' \
           --exclude='node_modules' \
           --exclude='project.tar.gz' \
@@ -55,7 +55,7 @@ runs:
 
         echo "Base64 encoding tarball..."
         # Use portable base64 invocation (GNU/macOS)
-        base64 project.tar.gz > project.tar.base64
+        base64 /tmp/project.tar.gz > /tmp/project.tar.base64
 
         echo "Tarball created and encoded successfully"
 
@@ -73,7 +73,7 @@ runs:
         EOF
 
         # Append the base64 content with proper indentation
-        cat project.tar.base64 | sed 's/^/      /' >> .labspace/compose.pipeline.yaml
+        cat /tmp/project.tar.base64 | sed 's/^/      /' >> .labspace/compose.pipeline.yaml
 
         # Append the service configuration to mount the config and specify its location
         cat >> .labspace/compose.pipeline.yaml << 'EOF'
