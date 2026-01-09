@@ -50,6 +50,7 @@ runs:
         tar -czf project.tar.gz \
           --exclude='.git' \
           --exclude='node_modules' \
+          --exclude='project.tar.gz' \
           .
 
         echo "Base64 encoding tarball..."
