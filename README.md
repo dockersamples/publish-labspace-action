@@ -23,7 +23,8 @@ Your repository must have a `.labspace/compose.overrides.yaml` file, following t
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
-| `labspace_repo` | The repo where the Compose file should be published | Yes | - |
+| `target_repo` | The repo where the Compose file should be published | Yes | - |
+| `target_tag` | The tag for the Compose file should be published | No | `latest` |
 | `labspace_base_version` | The version of the base Labspace Compose file | No | `latest` |
 | `labspace_overrides_file` | Path to the Labspace Compose overrides file | No | `.labspace/compose.overrides.yaml` |
 
@@ -52,7 +53,7 @@ jobs:
       - name: Publish Labspace
         uses: dockersamples/publish-labspace-action@v1
         with:
-          labspace_repo: dockersamples/labspace-demo
+          target_repo: dockersamples/labspace-demo
 ```
 
 ## How it works

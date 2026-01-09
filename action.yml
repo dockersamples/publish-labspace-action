@@ -5,9 +5,13 @@ branding:
   color: 'blue'
 
 inputs:
-  labspace_repo:
+  target_repo:
     description: 'The repo where the Compose file should be published'
     required: true
+  target_tag:
+    description: 'The tag of the published Compose file'
+    required: false
+    default: 'latest'
   labspace_base_version:
     description: 'The version of the base Labspace Compose file'
     required: false
@@ -105,6 +109,6 @@ runs:
           -f oci://dockersamples/labspace:${{ inputs.labspace_base_version }} \
           ${OVERRIDES_FLAG} \
           -f .labspace/compose.pipeline.yaml \
-          publish ${{ inputs.labspace_repo }} --with-env -y
+          publish ${{ inputs.target_repo }}:${{ inputs.target_tag }} --with-env -y
 
         echo "Labspace published successfully"
