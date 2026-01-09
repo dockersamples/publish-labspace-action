@@ -19,7 +19,7 @@ inputs:
   labspace_overrides_file:
     description: 'Path to the Labspace Compose overrides file'
     required: false
-    default: '.labspace/compose.overrides.yaml'
+    default: '.labspace/compose.override.yaml'
   
 
 runs:
