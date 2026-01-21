@@ -16,8 +16,8 @@ inputs:
     description: 'The version of the base Labspace Compose file'
     required: false
     default: 'latest'
-  labspace_overrides_file:
-    description: 'Path to the Labspace Compose overrides file'
+  labspace_override_files:
+    description: 'Path to Labspace-specific Compose override files, comma-separated'
     required: false
     default: '.labspace/compose.override.yaml'
   
@@ -100,11 +100,15 @@ runs:
         echo "Publishing Labspace..."
 
         OVERRIDES_FLAG=""
-        if [ -f "${{ inputs.labspace_overrides_file }}" ]; then
-          OVERRIDES_FLAG="-f ${{ inputs.labspace_overrides_file }}"
-        else
-          echo "Overrides file '${{ inputs.labspace_overrides_file }}' not found; proceeding without it."
-        fi
+        IFS=',' read -ra OVERRIDE_FILES <<< "${{ inputs.labspace_override_files }}"
+        for override_file in "${OVERRIDE_FILES[@]}"; do
+          override_file=$(echo "$override_file" | xargs)  # trim whitespace
+          if [ -f "$override_file" ] || [[ "$override_file" == "oci://"* ]]; then
+            OVERRIDES_FLAG="$OVERRIDES_FLAG -f $override_file"
+          else
+            echo "Overrides file '$override_file' not found; skipping."
+          fi
+        done
 
         docker compose \
           -f oci://dockersamples/labspace:${{ inputs.labspace_base_version }} \

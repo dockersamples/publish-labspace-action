@@ -26,7 +26,7 @@ Your repository must have a `.labspace/compose.overrides.yaml` file, following t
 | `target_repo` | The repo where the Compose file should be published | Yes | - |
 | `target_tag` | The tag for the Compose file should be published | No | `latest` |
 | `labspace_base_version` | The version of the base Labspace Compose file | No | `latest` |
-| `labspace_overrides_file` | Path to the Labspace Compose overrides file | No | `.labspace/compose.overrides.yaml` |
+| `labspace_override_files` | Paths to Labspace-specific Compose override files, comma separated | No | `.labspace/compose.overrides.yaml` |
 
 ## Usage
 
