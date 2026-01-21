@@ -54,6 +54,7 @@ runs:
         tar -czf /tmp/project.tar.gz \
           --exclude='.git' \
           --exclude='node_modules' \
+          --exclude='.github/workflows/*labspace*' \
           --exclude='project.tar.gz' \
           .
 
