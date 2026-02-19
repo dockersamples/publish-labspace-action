@@ -19,7 +19,7 @@ inputs:
   labspace_override_files:
     description: 'Path to Labspace-specific Compose override files, comma-separated'
     required: false
-    default: '.labspace/compose.override.yaml'
+    default: 'compose.override.yaml'
   
 
 runs:
@@ -33,30 +33,25 @@ runs:
     - name: Set contentVersion in Labspace metadata
       shell: bash
       run: |
-        if [ ! -f labspace.yaml ]; then
-          echo "Error: labspace.yaml not found in repository root"
+        if [ ! -f labspace/labspace.yaml ]; then
+          echo "Error: labspace/labspace.yaml not found in repository root"
           exit 1
         fi
         CONTENT_VERSION=$(git rev-parse --short HEAD)
         echo "Setting contentVersion in labspace.yaml to $CONTENT_VERSION"
         
-        if grep -qE '^[[:space:]]*contentVersion:' labspace.yaml; then
+        if grep -qE '^[[:space:]]*contentVersion:' labspace/labspace.yaml; then
           # Use portable in-place edit across GNU/macOS sed
-          sed -i.bak "s/^\([[:space:]]*contentVersion:\).*/\1 $CONTENT_VERSION/" labspace.yaml && rm -f labspace.yaml.bak
+          sed -i.bak "s/^\([[:space:]]*contentVersion:\).*/\1 $CONTENT_VERSION/" labspace/labspace.yaml && rm -f labspace/labspace.yaml.bak
         else
-          echo "Warning: contentVersion: not found in labspace.yaml; skipping update"
+          echo "Warning: contentVersion: not found in labspace/labspace.yaml; skipping update"
         fi
 
     - name: Create project tarball and encode
       shell: bash
       run: |
-        echo "Creating tarball of project..."
-        tar -czf /tmp/project.tar.gz \
-          --exclude='.git' \
-          --exclude='node_modules' \
-          --exclude='.github/workflows/*labspace*' \
-          --exclude='project.tar.gz' \
-          .
+        echo "Creating tarball of labspace..."
+        tar -czf /tmp/project.tar.gz labspace project
 
         echo "Base64 encoding tarball..."
         # Use portable base64 invocation (GNU/macOS)
@@ -67,21 +62,20 @@ runs:
     - name: Generate compose overrides with embedded tarball
       shell: bash
       run: |
-        echo "Generating .labspace/compose.pipeline.yaml..."
-        mkdir -p .labspace
-
+        echo "Generating /tmp/compose.pipeline.yaml..."
+        
         # Create the pipeline compose file
-        cat > .labspace/compose.pipeline.yaml << 'EOF'
+        cat > /tmp/compose.pipeline.yaml << 'EOF'
         configs:
           project_source_tar:
             content: |
         EOF
 
         # Append the base64 content with proper indentation
-        cat /tmp/project.tar.base64 | sed 's/^/      /' >> .labspace/compose.pipeline.yaml
+        cat /tmp/project.tar.base64 | sed 's/^/      /' >> /tmp/compose.pipeline.yaml
 
         # Append the service configuration to mount the config and specify its location
-        cat >> .labspace/compose.pipeline.yaml << 'EOF'
+        cat >> /tmp/compose.pipeline.yaml << 'EOF'
 
         services:
           configurator:
@@ -113,7 +107,7 @@ runs:
         docker compose \
           -f oci://dockersamples/labspace:${{ inputs.labspace_base_version }} \
           ${OVERRIDES_FLAG} \
-          -f .labspace/compose.pipeline.yaml \
+          -f /tmp/compose.pipeline.yaml \
           publish ${{ inputs.target_repo }}:${{ inputs.target_tag }} --with-env -y
 
         echo "Labspace published successfully"

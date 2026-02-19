@@ -8,14 +8,18 @@ This action:
 
 1. Sets up a known-working version of Docker Compose
 2. Creates a base64-encoded tarball of the content in the repository
-3. Generates a `.labspace/compose.pipeline.yaml` file with:
+3. Generates a temporary `compose.pipeline.yaml` file with:
    - A `project_source_tar` config containing the base64-encoded tarball
    - Mounts the tarball into the `configurator` service and sets the `PROJECT_TAR_PATH` environment variable pointing to the mounted tarball
 4. Publishes the Compose file using `docker compose publish`
 
 ## Prerequisites
 
-Your repository must have a `.labspace/compose.overrides.yaml` file, following the convention set in the dockersamples/labspace-starter repo.
+Your repository must follow the structure provided in the dockersamples/labspace-starter repo:
+
+1. Have a `compose.overrides.yaml` file
+2. Store the Labspace project in the `project` directory
+3. Store the Labspace instructions and `labspace.yaml` in the `labspace` directory
 
 ## Configuration
 
@@ -26,7 +30,7 @@ Your repository must have a `.labspace/compose.overrides.yaml` file, following t
 | `target_repo` | The repo where the Compose file should be published | Yes | - |
 | `target_tag` | The tag for the Compose file should be published | No | `latest` |
 | `labspace_base_version` | The version of the base Labspace Compose file | No | `latest` |
-| `labspace_override_files` | Paths to Labspace-specific Compose override files, comma separated | No | `.labspace/compose.overrides.yaml` |
+| `labspace_override_files` | Paths to Labspace-specific Compose override files, comma separated | No | `compose.overrides.yaml` |
 
 ## Usage
 
