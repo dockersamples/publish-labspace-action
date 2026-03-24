@@ -26,7 +26,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup Docker Compose
-      uses: docker/setup-compose-action@v1
+      uses: docker/setup-compose-action@8cccb8c14b6500aaffebff1aa49c502c34d2e5e6 # v2.1.0
       with:
         version: v2.39.3
 
